@@ -29,8 +29,9 @@ class MangaListSpider(scrapy.Spider):
 
     def parse(self, response):
         token, agent = cfscrape.get_tokens('http://kissmanga.com/', 'Your prefarable user agent, _optional_')
-        with open('mangas.json', 'r') as outfile:
-            manga_urls = json.load(outfile)
+        with open('mangas__1.json', 'r') as outfile:
+            mangas = json.load(outfile)
+            mangas_urls = mangas['mangas']['url']
         manga_genres = []
         manga_name = 'None'
         manga_artist = []
@@ -49,10 +50,9 @@ class MangaListSpider(scrapy.Spider):
                     if item.split('/AuthorArtist/')[1]:
                         manga_artist.append(item.split('/AuthorArtist/')[1])
         manga_info = {'Name': manga_name, 'Genres': manga_genres, 'Artist': manga_artist}
-        with open('manga_info_2.json', 'a') as file:
+        with open('mangas_info_2.json', 'a') as file:
             json.dump(manga_info, file)
-
-        for manga_url in manga_urls:
+        for manga_url in mangas_urls:
             url = 'http://kissmanga.com/%s' % manga_url
             yield Request(url,
                           cookies=token,
