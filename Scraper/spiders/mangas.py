@@ -33,9 +33,9 @@ class MangaListSpider(scrapy.Spider):
 
     def parse(self, response):
         items = response.xpath('//tr[@class="odd"]//td[position() mod 2 = 1]/a/@href').extract()
+        data = {}
+        data['mangas'] = []
         with open('mangas__1.json', 'a') as outfile:
-            data={}
-            data['mangas'] = []
             for item in items:
                 data['mangas'].append({"title": item.split("/Manga/")[1],
                         "url": item})
