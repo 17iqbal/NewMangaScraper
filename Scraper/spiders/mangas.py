@@ -33,14 +33,13 @@ class MangaListSpider(scrapy.Spider):
 
     def parse(self, response):
         items = response.xpath('//tr[@class="odd"]//td[position() mod 2 = 1]/a/@href').extract()
-        data = {}
-        data['mangas'] = []
+        data = {'mangas': []}
         with open('mangas__1.json', 'a') as outfile:
             for item in items:
                 data['mangas'].append({"title": item.split("/Manga/")[1],
                         "url": item})
-                json.dump(data, outfile)
                 # outfile.write(wut)
+            json.dump(data, outfile, indent=4)
         next_page = response.css('div.pagination a::attr(href)').extract()
         page_counter = int(re.search(r'\d+', next_page[-1]).group())
         for url in self.start_urls:
