@@ -2,6 +2,10 @@ import cfscrape
 import json
 import scrapy
 import re
+from pymongo import MongoClient
+client = MongoClient('mongodb://vosoditdeus:root@ds163034.mlab.com:63034/manga')
+db = client.manga
+
 
 from scrapy import Request, Field, Item
 
@@ -29,31 +33,32 @@ class MangaListSpider(scrapy.Spider):
 
     def parse(self, response):
         token, agent = cfscrape.get_tokens('http://kissmanga.com/', 'Your prefarable user agent, _optional_')
-        with open('mangas__1.json', 'r') as outfile:
-            mangas = json.load(outfile)
-            mangas_urls = mangas['mangas']['url']
-        manga_genres = []
-        manga_name = 'None'
-        manga_artist = []
-        divs = response.xpath('//div[@class="barContent"]')
-        for p in divs.xpath('.//p/a/@href'):  # extracts all <p> inside
-            data = p.extract()
-            arr = data.split()
-            for item in arr:
-                if item.find("/Manga/") != -1:
-                    if item.split('/Manga/')[1]:
-                        manga_name = item.split('/Manga/')[1]
-                if item.find("/Genre/") != -1:
-                    if item.split('/Genre/')[1]:
-                        manga_genres.append(item.split('/Genre/')[1])
-                if item.find("/AuthorArtist/") != -1:
-                    if item.split('/AuthorArtist/')[1]:
-                        manga_artist.append(item.split('/AuthorArtist/')[1])
-        manga_info = {'Name': manga_name, 'Genres': manga_genres, 'Artist': manga_artist}
-        with open('mangas_info_2.json', 'a') as file:
-            json.dump(manga_info, file)
-        for manga_url in mangas_urls:
-            url = 'http://kissmanga.com/%s' % manga_url
-            yield Request(url,
-                          cookies=token,
-                          headers={'User-Agent': agent})
+        mangas = db.mangas.find()
+        for manga in mangas:
+            manga_title = manga.title
+            manga_url = manga.url
+            manga_genres = []
+            manga_name = 'None'
+            manga_artist = []
+            divs = response.xpath('//div[@class="barContent"]')
+            for p in divs.xpath('.//p/a/@href'):  # extracts all <p> inside
+                data = p.extract()
+                arr = data.split()
+                for item in arr:
+                    if item.find("/Manga/") != -1:
+                        if item.split('/Manga/')[1]:
+                            manga_name = item.split('/Manga/')[1]
+                    if item.find("/Genre/") != -1:
+                        if item.split('/Genre/')[1]:
+                            manga_genres.append(item.split('/Genre/')[1])
+                    if item.find("/AuthorArtist/") != -1:
+                        if item.split('/AuthorArtist/')[1]:
+                            manga_artist.append(item.split('/AuthorArtist/')[1])
+            manga_info = {'Name': manga_name, 'Genres': manga_genres, 'Artist': manga_artist}
+            # with open('mangas_info_2.json', 'a') as file:
+            #     json.dump(manga_info, file)
+            for manga_url in manga.next().url:
+                url = 'http://kissmanga.com/%s' % manga_url
+                yield Request(url,
+                                  cookies=token,
+                                  headers={'User-Agent': agent})
